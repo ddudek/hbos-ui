@@ -2,23 +2,26 @@
   <div
     ref="slider"
     class="app-progress-slider"
-    :class="{ disabled, 'is-on-header': isOnHeader }"
+    :class="{ disabled, 'is-on-header': isOnHeader, 'is-vertical': isVertical }"
     @click="handleClick"
     @mousedown="startDrag"
     @touchstart="startTouch"
   >
     <div class="app-progress-slider__track">
-      <div class="app-progress-slider__progress" :style="{ width: displayPercent + '%' }" />
+      <div
+        class="app-progress-slider__progress"
+        :style="isVertical ? { height: displayPercent + '%' } : { width: displayPercent + '%' }"
+      />
       <div
         v-if="centerMark !== undefined"
         class="app-progress-slider__center-mark"
-        :style="{ left: centerMarkPercent + '%' }"
+        :style="isVertical ? { bottom: centerMarkPercent + '%' } : { left: centerMarkPercent + '%' }"
       />
     </div>
     <div
       v-if="hasThumb && !isOnHeader"
       class="app-progress-slider__thumb"
-      :style="{ left: displayPercent + '%' }"
+      :style="isVertical ? { bottom: displayPercent + '%' } : { left: displayPercent + '%' }"
     />
   </div>
 </template>
@@ -35,6 +38,7 @@ interface ProgressSliderProps {
   hasThumb?: boolean
   isDraggable?: boolean
   isOnHeader?: boolean
+  isVertical?: boolean
   centerMark?: number // Value at which to show center mark (optional)
 }
 
@@ -47,6 +51,7 @@ const {
   hasThumb = true,
   isDraggable = false,
   isOnHeader = false,
+  isVertical = false,
   centerMark = undefined,
 } = defineProps<ProgressSliderProps>()
 
@@ -85,9 +90,18 @@ function getValueFromMouse(event: MouseEvent): number | null {
   if (!slider.value) return null
 
   const rect = slider.value.getBoundingClientRect()
-  const clickX = event.clientX - rect.left
-  const width = rect.width
-  const ratio = clickX / width
+
+  let ratio: number
+  if (isVertical) {
+    const clickY = event.clientY - rect.top
+    const height = rect.height
+    // For vertical sliders, we want bottom to be 0 and top to be max
+    ratio = 1 - (clickY / height)
+  } else {
+    const clickX = event.clientX - rect.left
+    const width = rect.width
+    ratio = clickX / width
+  }
 
   let newValue = min + ratio * (max - min)
 
@@ -160,9 +174,18 @@ function getValueFromTouch(event: TouchEvent, useChangedTouches = false): number
   if (touches.length === 0) return null
 
   const rect = slider.value.getBoundingClientRect()
-  const touchX = touches[0].clientX - rect.left
-  const width = rect.width
-  const ratio = touchX / width
+
+  let ratio: number
+  if (isVertical) {
+    const touchY = touches[0].clientY - rect.top
+    const height = rect.height
+    // For vertical sliders, we want bottom to be 0 and top to be max
+    ratio = 1 - (touchY / height)
+  } else {
+    const touchX = touches[0].clientX - rect.left
+    const width = rect.width
+    ratio = touchX / width
+  }
 
   let newValue = min + ratio * (max - min)
 
@@ -174,6 +197,7 @@ function getValueFromTouch(event: TouchEvent, useChangedTouches = false): number
 }
 
 let touchStartX = 0
+let touchStartY = 0
 let touchMoved = false
 
 function startTouch(event: TouchEvent) {
@@ -181,6 +205,7 @@ function startTouch(event: TouchEvent) {
 
   touchMoved = false
   touchStartX = event.touches[0].clientX
+  touchStartY = event.touches[0].clientY
 
   if (!isDraggable) return
 
@@ -194,8 +219,10 @@ function startTouch(event: TouchEvent) {
 function onTouchMove(event: TouchEvent) {
   if (event.touches.length === 0) return
 
-  const deltaX = Math.abs(event.touches[0].clientX - touchStartX)
-  if (deltaX > 5) touchMoved = true // threshold to detect dragging
+  const delta = isVertical
+    ? Math.abs(event.touches[0].clientY - touchStartY)
+    : Math.abs(event.touches[0].clientX - touchStartX)
+  if (delta > 5) touchMoved = true // threshold to detect dragging
 
   if (!dragging.value || disabled) return
 
@@ -257,6 +284,53 @@ onBeforeUnmount(() => {
       background-color: $progress-slider-bg--dark;
       pointer-events: all;
       cursor: not-allowed;
+    }
+  }
+
+  // Vertical orientation
+  &.is-vertical {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 12px;
+    height: 100%;
+    min-height: 100px;
+
+    #{$root}__track {
+      width: 8px;
+      height: 100%;
+
+      @include media-down(md) {
+        width: 6px;
+      }
+    }
+
+    #{$root}__progress {
+      width: 100%;
+      // Height is controlled by the style binding in template
+      // Position from bottom for vertical sliders
+      position: absolute;
+      bottom: 0;
+      left: 0;
+    }
+
+    #{$root}__center-mark {
+      left: 50%;
+      bottom: auto; // Reset bottom positioning
+      transform: translate(-50%, 50%);
+      width: 120%;
+      height: 2px;
+
+      @include media-down(md) {
+        width: 140%;
+      }
+    }
+
+    #{$root}__thumb {
+      left: 50%;
+      top: auto;
+      transform: translate(-50%, 50%);
+      // Bottom positioning is handled by the style binding in template
     }
   }
 

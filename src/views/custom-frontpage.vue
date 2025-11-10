@@ -10,7 +10,7 @@
 
         <!-- Volume control -->
         <div class="now-playing__volume">
-          <VolumeControl size="wide" />
+          <VolumeControl size="vertical" />
         </div>
       </div>
 

@@ -16,7 +16,8 @@
         :disabled="false"
         :has-thumb="true"
         :is-draggable="true"
-        :is-on-header="true"
+        :is-on-header="props.size !== 'vertical'"
+        :is-vertical="props.size === 'vertical'"
         @click:progress="handleVolumeChange"
       />
     </div>
@@ -37,7 +38,7 @@ import ProgressSlider from '@/components/ProgressSlider.vue'
 
 // Props for size variants
 interface Props {
-  size?: 'compact' | 'normal' | 'wide' | 'large'
+  size?: 'compact' | 'normal' | 'wide' | 'large' | 'vertical'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -139,12 +140,52 @@ const handleVolumeChange = (newVolume: number) => {
     }
   }
 
+  // Vertical size (for vertical volume control)
+  &--vertical {
+    flex-direction: column;
+    align-items: center;
+    width: auto;
+    height: 100%;
+    min-height: 200px;
+    gap: 12px;
+
+    .volume-slider-container {
+      flex: 1;
+      height: 100%;
+      width: 20px;
+      display: flex;
+      align-items: stretch;
+      margin-top: 0;
+    }
+
+    .volume-icon {
+      flex-shrink: 0;
+
+      &--mute {
+        order: 2; // Bottom icon (mute)
+      }
+
+      &--speaker {
+        order: 0; // Top icon (speaker)
+      }
+    }
+
+    .volume-slider-container {
+      order: 1; // Middle (slider)
+    }
+  }
+
   .volume-slider-container {
     // Counter the margin-top from is-on-header to center properly
     margin-top: -4px;
 
     @include media-down(md) {
       margin-top: -3px;
+    }
+
+    // Reset margin for vertical layout
+    .volume-control--vertical & {
+      margin-top: 0;
     }
   }
 
@@ -164,9 +205,4 @@ const handleVolumeChange = (newVolume: number) => {
   }
 }
 
-@include media-down(md) {
-  .volume-control {
-    display: none;
-  }
-}
 </style>
