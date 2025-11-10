@@ -6,7 +6,7 @@ const router = createRouter({
     {
       path: '/',
       component: () => import('@/layouts/default.vue'),
-      redirect: { name: 'now-playing' },
+      redirect: { name: 'custom-frontpage' },
       children: [
         {
           path: '/library',
@@ -105,6 +105,11 @@ const router = createRouter({
           path: '/now-playing',
           name: 'now-playing',
           component: () => import('@/views/now-playing.vue'),
+        },
+        {
+          path: '/custom-frontpage',
+          name: 'custom-frontpage',
+          component: () => import('@/views/custom-frontpage.vue'),
         },
         {
           path: '/playlist',
