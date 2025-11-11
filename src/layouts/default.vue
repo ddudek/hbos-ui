@@ -20,7 +20,7 @@ const route = useRoute()
 import Header from '@/components/Header.vue'
 import Sidebar from '@/components/Sidebar.vue'
 
-const slickPlayerControlsExceptions: string[] = ['now-playing']
+const slickPlayerControlsExceptions: string[] = ['now-playing', 'custom-frontpage']
 
 const isPlayerControls = computed(
   () => !slickPlayerControlsExceptions.includes(route.name as string),
